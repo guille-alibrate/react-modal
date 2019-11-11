@@ -1,21 +1,22 @@
-import React, { Component } from "react";
+import React, {
+  Component
+} from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import ModalPortal from "./ModalPortal";
 import * as ariaAppHider from "../helpers/ariaAppHider";
-import SafeHTMLElement, { canUseDOM } from "../helpers/safeHTMLElement";
+import SafeHTMLElement, {
+  canUseDOM
+} from "../helpers/safeHTMLElement";
 
-import { polyfill } from "react-lifecycles-compat";
+import {
+  polyfill
+} from "react-lifecycles-compat";
 
 export const portalClassName = "ReactModalPortal";
 export const bodyOpenClassName = "ReactModal__Body--open";
 
-const isReact16 = ReactDOM.createPortal !== undefined;
-
-const getCreatePortal = () =>
-  isReact16
-    ? ReactDOM.createPortal
-    : ReactDOM.unstable_renderSubtreeIntoContainer;
+const getCreatePortal = () => ReactDOM.createPortal;
 
 function getParentElement(parentSelector) {
   return parentSelector();
@@ -82,7 +83,8 @@ class Modal extends Component {
     shouldCloseOnEsc: true,
     shouldCloseOnOverlayClick: true,
     shouldReturnFocusAfterClose: true,
-    parentSelector: () => document.body
+    parentSelector: () => document.body,
+    modalContainerSelector: '.' + portalClassName
   };
 
   static defaultStyles = {
@@ -111,34 +113,36 @@ class Modal extends Component {
   };
 
   componentDidMount() {
-    if (!canUseDOM) return;
-
-    if (!isReact16) {
-      this.node = document.createElement("div");
+    if (!this.props.modalContainerSelector) {
+      const parent = getParentElement(this.props.parentSelector);
+      parent.appendChild(this.node);
     }
-    this.node.className = this.props.portalClassName;
-
-    const parent = getParentElement(this.props.parentSelector);
-    parent.appendChild(this.node);
-
-    !isReact16 && this.renderPortal(this.props);
   }
 
   getSnapshotBeforeUpdate(prevProps) {
     const prevParent = getParentElement(prevProps.parentSelector);
     const nextParent = getParentElement(this.props.parentSelector);
-    return { prevParent, nextParent };
+    return {
+      prevParent,
+      nextParent
+    };
   }
 
   componentDidUpdate(prevProps, _, snapshot) {
     if (!canUseDOM) return;
-    const { isOpen, portalClassName } = this.props;
+    const {
+      isOpen,
+      portalClassName
+    } = this.props;
 
     if (prevProps.portalClassName !== portalClassName) {
       this.node.className = portalClassName;
     }
 
-    const { prevParent, nextParent } = snapshot;
+    const {
+      prevParent,
+      nextParent
+    } = snapshot;
     if (nextParent !== prevParent) {
       prevParent.removeChild(this.node);
       nextParent.appendChild(this.node);
@@ -146,8 +150,6 @@ class Modal extends Component {
 
     // Stop unnecessary renders if modal is remaining closed
     if (!prevProps.isOpen && !isOpen) return;
-
-    !isReact16 && this.renderPortal(this.props);
   }
 
   componentWillUnmount() {
@@ -172,7 +174,6 @@ class Modal extends Component {
   }
 
   removePortal = () => {
-    !isReact16 && ReactDOM.unmountComponentAtNode(this.node);
     const parent = getParentElement(this.props.parentSelector);
     parent.removeChild(this.node);
   };
@@ -184,28 +185,36 @@ class Modal extends Component {
   renderPortal = props => {
     const createPortal = getCreatePortal();
     const portal = createPortal(
-      this,
-      <ModalPortal defaultStyles={Modal.defaultStyles} {...props} />,
+      this, <
+      ModalPortal defaultStyles = {
+        Modal.defaultStyles
+      } {
+        ...props
+      }
+      />,
       this.node
     );
     this.portalRef(portal);
   };
 
   render() {
-    if (!canUseDOM || !isReact16) {
-      return null;
-    }
+    if (!canUseDOM) return null;
 
-    if (!this.node && isReact16) {
+    if (!this.node && !this.props.modalContainerSelector) {
       this.node = document.createElement("div");
+      this.node.className = this.props.portalClassName;
     }
 
     const createPortal = getCreatePortal();
-    return createPortal(
-      <ModalPortal
-        ref={this.portalRef}
-        defaultStyles={Modal.defaultStyles}
-        {...this.props}
+    return createPortal( <
+      ModalPortal ref = {
+        this.portalRef
+      }
+      defaultStyles = {
+        Modal.defaultStyles
+      } {
+        ...this.props
+      }
       />,
       this.node
     );
